@@ -285,19 +285,21 @@ class NeuralGenerator(object):
         image = Image.open(path)
         (w,h) = image.size
         
-        size = args.size
+        sizearg = args.size
         
-        if (size < 320): size = 320
+        if (sizearg < 320): size = 320
         
         if (w >= h):
-            if (w > size):
-                h = int(h * size / w)
-                w = size
+            if (w != sizearg):
+                h = int(h * sizearg / w)
+                w = sizearg
+                print('  - Resizing {} image data to {}x{}.'.format(path, w, h))
                 image = image.resize((w, h), Image.ANTIALIAS)
         else:
-            if (h > size):
-                w = int(h * size / h)
-                h = size
+            if (h != sizearg):
+                w = int(h * sizearg / h)
+                h = sizearg
+                print('  - Resizing {} image data to {}x{}.'.format(path, w, h))
                 image = image.resize((w, h), Image.ANTIALIAS)
         
         tmppathname = '/tmp/' + os.path.basename(path)
