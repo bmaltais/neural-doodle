@@ -12,7 +12,8 @@ import bz2
 import pickle
 import argparse
 import warnings
-from PIL import Images
+import time
+from PIL import Image
 
 
 # Configure all options first so we can custom load other libraries (Theano) based on device specified by user.
@@ -106,7 +107,7 @@ class Model(object):
         """
 
         net = {}
-
+    
         # First network for the main image. These are convolution only, and stop at layer 4_2 (rest unused).
         net['img']     = InputLayer((1, 3, None, None))
         net['conv1_1'] = ConvLayer(net['img'],     64, 3, pad=1)
@@ -122,26 +123,65 @@ class Model(object):
         net['pool3']   = PoolLayer(net['conv3_4'], 2, mode='average_exc_pad')
         net['conv4_1'] = ConvLayer(net['pool3'],   512, 3, pad=1)
         net['conv4_2'] = ConvLayer(net['conv4_1'], 512, 3, pad=1)
-        net['main']    = net['conv4_2']
-
+        net['conv4_3'] = ConvLayer(net['conv4_2'], 512, 3, pad=1)
+        net['conv4_4'] = ConvLayer(net['conv4_3'], 512, 3, pad=1)
+        net['pool4']   = PoolLayer(net['conv4_4'], 2, mode='average_exc_pad')
+        net['conv5_1'] = ConvLayer(net['pool4'],   512, 3, pad=1)
+        net['conv5_2'] = ConvLayer(net['conv5_1'], 512, 3, pad=1)
+        net['conv5_3'] = ConvLayer(net['conv5_2'], 512, 3, pad=1)
+        net['conv5_4'] = ConvLayer(net['conv5_3'], 512, 3, pad=1)
+        net['main']    = net['conv5_4']
+        # net['main']    = net['conv4_2']
+        
         # Second network for the semantic layers.  This dynamically downsamples the map and concatenates it.
         net['map'] = InputLayer((1, 3, None, None))
         net['map1_1'] = PoolLayer(net['map'], 2, mode='average_exc_pad')
         net['map2_1'] = PoolLayer(net['map'], 2, mode='average_exc_pad')
         net['map3_1'] = PoolLayer(net['map'], 4, mode='average_exc_pad')
+        net['map3_2'] = PoolLayer(net['map'], 4, mode='average_exc_pad')
+        net['map3_3'] = PoolLayer(net['map'], 4, mode='average_exc_pad')
+        net['map3_4'] = PoolLayer(net['map'], 4, mode='average_exc_pad')
         net['map4_1'] = PoolLayer(net['map'], 8, mode='average_exc_pad')
-
+        net['map4_2'] = PoolLayer(net['map'], 8, mode='average_exc_pad')
+        net['map4_3'] = PoolLayer(net['map'], 8, mode='average_exc_pad')
+        net['map4_4'] = PoolLayer(net['map'], 8, mode='average_exc_pad')
+        net['map5_1'] = PoolLayer(net['map'], 16, mode='average_exc_pad')
+        net['map5_2'] = PoolLayer(net['map'], 16, mode='average_exc_pad')
+        net['map5_3'] = PoolLayer(net['map'], 16, mode='average_exc_pad')
+        net['map5_4'] = PoolLayer(net['map'], 16, mode='average_exc_pad')
+        
+        
         # Third network for the nearest neighbors; it's a default size for now, updated once we know more.
         net['nn1_1'] = ConvLayer(net['conv1_1'], 1, 3, b=None, pad=0)
         net['nn2_1'] = ConvLayer(net['conv2_1'], 1, 3, b=None, pad=0)
         net['nn3_1'] = ConvLayer(net['conv3_1'], 1, 3, b=None, pad=0)
+        net['nn3_2'] = ConvLayer(net['conv3_2'], 1, 3, b=None, pad=0)
+        net['nn3_3'] = ConvLayer(net['conv3_3'], 1, 3, b=None, pad=0)
+        net['nn3_4'] = ConvLayer(net['conv3_4'], 1, 3, b=None, pad=0)
         net['nn4_1'] = ConvLayer(net['conv4_1'], 1, 3, b=None, pad=0)
-
+        net['nn4_2'] = ConvLayer(net['conv4_2'], 1, 3, b=None, pad=0)
+        net['nn4_3'] = ConvLayer(net['conv4_3'], 1, 3, b=None, pad=0)
+        net['nn4_4'] = ConvLayer(net['conv4_4'], 1, 3, b=None, pad=0)
+        net['nn5_1'] = ConvLayer(net['conv5_1'], 1, 3, b=None, pad=0)
+        net['nn5_2'] = ConvLayer(net['conv5_2'], 1, 3, b=None, pad=0)
+        net['nn5_3'] = ConvLayer(net['conv5_3'], 1, 3, b=None, pad=0)
+        net['nn5_4'] = ConvLayer(net['conv5_4'], 1, 3, b=None, pad=0)
+        
         net['mm1_1'] = ConvLayer(net['map1_1'], 1, 3, b=None, pad=0)
         net['mm2_1'] = ConvLayer(net['map2_1'], 1, 3, b=None, pad=0)
         net['mm3_1'] = ConvLayer(net['map3_1'], 1, 3, b=None, pad=0)
+        net['mm3_2'] = ConvLayer(net['map3_2'], 1, 3, b=None, pad=0)
+        net['mm3_3'] = ConvLayer(net['map3_3'], 1, 3, b=None, pad=0)
+        net['mm3_4'] = ConvLayer(net['map3_4'], 1, 3, b=None, pad=0)
         net['mm4_1'] = ConvLayer(net['map4_1'], 1, 3, b=None, pad=0)
-
+        net['mm4_2'] = ConvLayer(net['map4_2'], 1, 3, b=None, pad=0)
+        net['mm4_3'] = ConvLayer(net['map4_3'], 1, 3, b=None, pad=0)
+        net['mm4_4'] = ConvLayer(net['map4_4'], 1, 3, b=None, pad=0)
+        net['mm5_1'] = ConvLayer(net['map5_1'], 1, 3, b=None, pad=0)
+        net['mm5_2'] = ConvLayer(net['map5_2'], 1, 3, b=None, pad=0)
+        net['mm5_3'] = ConvLayer(net['map5_3'], 1, 3, b=None, pad=0)
+        net['mm5_4'] = ConvLayer(net['map5_4'], 1, 3, b=None, pad=0)
+        
         self.network = net
 
     def load_data(self):
@@ -489,7 +529,10 @@ class NeuralGenerator(object):
         if args.save_every and self.frame % args.save_every == 0:
             resolution = self.content_image.shape[1:]
             image = scipy.misc.toimage(self.model.finalize_image(Xn, resolution), cmin=0, cmax=255)
-            image.save('frames/%04d.png'%self.frame)
+            image_name= args.output + "_%04d"%self.frame + ".png"
+            # image_name="frames/" + time.strftime("%H:%M:%S") + "-%04d"%self.frame + ".png"
+            # image.save('frames/%04d.png'%self.frame)
+            image.save(image_name)
 
         # Print more information to the console every few iterations.
         if args.print_every and self.frame % args.print_every == 0:
