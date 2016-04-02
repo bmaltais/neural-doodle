@@ -505,7 +505,8 @@ class NeuralGenerator(object):
             # Setup the seed for the optimization as specified by the user.
             shape = self.content_image.shape[2:]
             if args.seed == 'style':
-                Xn = self.style_image[0] + self.model.pixel_mean
+                Xn = scipy.misc.imresize(self.style_image[0], shape)
+                Xn = Xn.transpose((2, 0, 1))[np.newaxis]
             if args.seed == 'content':
                 Xn = self.content_image[0] + self.model.pixel_mean
             if args.seed == 'noise':
