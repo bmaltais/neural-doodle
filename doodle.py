@@ -297,7 +297,7 @@ class NeuralGenerator(object):
                 image = image.resize((w, h), Image.ANTIALIAS)
         else:
             if (h != sizearg):
-                w = int(h * sizearg / h)
+                w = int(w * sizearg / h)
                 h = sizearg
                 print('  - Resizing {} image data to {}x{}.'.format(path, w, h))
                 image = image.resize((w, h), Image.ANTIALIAS)
